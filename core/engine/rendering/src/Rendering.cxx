@@ -11,6 +11,8 @@
 #include <glad/glad.h>
 #include <SDL.h>
 #include <imgui.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <stdexcept>
 #include <map>
@@ -38,9 +40,10 @@ namespace kyanite::engine::rendering {
 	std::shared_ptr<VertexBuffer> vertexBuffer = nullptr;
 	std::shared_ptr<IndexBuffer> indexBuffer = nullptr;
 	std::vector<float> vertices = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
+		-0.5f, -0.5f, 0.0f,  // Bottom left (Vertex 0)
+		 0.5f, -0.5f, 0.0f,  // Bottom right (Vertex 1)
+		-0.5f,  0.5f, 0.0f,  // Top left (Vertex 2) *NEW*
+		 0.5f,  0.5f, 0.0f   // Top right (Vertex 3) *NEW*
 	};
 
 	auto Init(NativePointer window, ImGuiContext* context) -> void {
@@ -69,16 +72,24 @@ namespace kyanite::engine::rendering {
 		swapchain = device->CreateSwapchain();
 
 		vertexBuffer = device->CreateVertexBuffer(vertices.data(), vertices.size() * sizeof(float));
-		std::vector<uint32_t> indices = { 0, 1, 2 };
+		std::vector<uint32_t> indices = {
+			0, 1, 2,  // First triangle (bottom left, bottom right, top left)
+			2, 1, 3   // Second triangle (top left, bottom right, top right)
+		};
+		// Print the number of indices to the debug console
+		OutputDebugStringA(("Number of indices: " + std::to_string(indices.size()) + "\n").c_str());
 		indexBuffer = device->CreateIndexBuffer(indices.data(), indices.size());
 
 		auto vertexShader = device->CompileShader(R"(
 #version 330 core
 
 layout(location = 0) in vec3 aPos;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main() {
-	gl_Position = vec4(aPos, 1.0);
+	gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
 		)", ShaderType::VERTEX);
 		auto pixelShader = device->CompileShader(R"(
@@ -94,7 +105,7 @@ vec3 hsv_to_rgb(vec3 c) {
 }
 		
 void main() {
-	float hue = mod(gl_FragCoord.x / 800.0 + gl_FragCoord.y / 600.0, 1.0);
+	float hue = mod(gl_FragCoord.x / 640.0 + gl_FragCoord.y / 360.0, 1.0);
     fragColor = vec4(hsv_to_rgb(vec3(hue, 1.0, 1.0)), 1.0);
 }
 		)", ShaderType::FRAGMENT);
@@ -124,20 +135,41 @@ void main() {
 		imguiContext->Begin();
 		uploadContext->Begin();
 		graphicsContext->ClearRenderTarget();
-		graphicsContext->SetViewport(0, 0, 800, 600, 0.0, 1.0);
-		graphicsContext->SetScissorRect(0, 0, 800, 600);
+		graphicsContext->SetViewport(0, 0, 1920, 1080, 0.0, 1.0);
+		graphicsContext->SetScissorRect(0, 0, 640, 360);
+		// View Matrix
+		glm::mat4 view = glm::lookAtLH(
+			glm::vec3(0.0f, 0.0f, -1.0f),    // Camera position (Z = -1)
+			glm::vec3(0.0f, 0.0f, 0.0f),     // Camera target (Z = 0)
+			glm::vec3(0.0f, 1.0f, 0.0f)      // Up vector (+Y)
+		);
+
+		// Projection Matrix
+		glm::mat4 projection = glm::orthoLH(
+			0.0f,         // Left
+			640.0f,       // Right (game world width)
+			0.0f,         // Bottom
+			360.0f,       // Top (game world height)
+			0.1f,         // Near plane
+			100.0f        // Far plane
+		);
+		graphicsContext->SetViewMatrix(view);
+		graphicsContext->SetProjectionMatrix(projection);
 
 		// Upload all the resources before rendering
 	}
 
 	auto Update(float deltaTime) -> void {
-		vertices[0] = -0.5f + sin(deltaTime);
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(32.0f, 32.0f, 1.0f));   // Position in front of the camera
+		model = glm::scale(model, glm::vec3(32.0f, 32.0f, 1.0f));    // Scale down to 32 pixels
+
 		uploadContext->UpdateVertexBuffer(vertexBuffer, vertices.data(), vertices.size() * sizeof(float));
 		uploadContext->Finish();
 		graphicsContext->SetVertexBuffer(0, vertexBuffer);
 		graphicsContext->SetIndexBuffer(indexBuffer);
 		graphicsContext->SetMaterial(testMaterial);
-		graphicsContext->DrawIndexed(indexBuffer->Size(), 0, 0);
+		graphicsContext->DrawIndexed(model, indexBuffer->Size(), 0, 0);
 		// Update the game state of the rendering engine
 	}
 
@@ -195,13 +227,31 @@ void main() {
 
 	}
 
-	auto DrawIndexed(uint32_t vertexBuffer, uint32_t indexBuffer, uint32_t material) -> void {
+	auto DrawIndexed(glm::mat4 model, uint32_t vertexBuffer, uint32_t indexBuffer, uint32_t material) -> void {
 		auto vb = vertexBuffers[vertexBuffer];
 		auto ib = indexBuffers[indexBuffer];
 
 		graphicsContext->SetVertexBuffer(0, vb);
 		graphicsContext->SetIndexBuffer(ib);
 		graphicsContext->SetMaterial(materials[material]);
-		graphicsContext->DrawIndexed(1, 0, 0);
+		graphicsContext->DrawIndexed(model, 1, 0, 0);
+	}
+
+	auto SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) -> void {
+		// Recalculate the aspect ratio and adjust the viewport accordingly
+		
+		if (float aspectRatio = (float)width / (float)height; aspectRatio > 16.0f / 9.0f) {
+			// If the window is wider than 16:9, adjust the width
+			float newWidth = height * (16.0f / 9.0f);
+			float xOffset = (width - newWidth) / 2;
+			graphicsContext->SetViewport((uint32_t)xOffset, 0, (uint32_t)newWidth, height, 0.0, 1.0);
+		}
+		else {
+			// If the window is taller than 16:9, adjust the height
+			float newHeight = width / (16.0f / 9.0f);
+			float yOffset = (height - newHeight) / 2;
+			graphicsContext->SetViewport(0, (uint32_t)yOffset, width, (uint32_t)newHeight, 0.0, 1.0);
+
+		}
 	}
 }

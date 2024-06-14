@@ -68,5 +68,14 @@ set_target_properties(System PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_
 
 add_executable(TestApp test.cxx)
 target_link_libraries(TestApp PRIVATE AssetDatabase AssetPipeline Audio EntityComponentSystem ImGui Input IO Logger Math Rendering System)
+target_include_directories(TestApp PRIVATE core/engine/audio/include)
+
+target_include_directories(TestApp PRIVATE core/engine/ecs/include)
+target_include_directories(TestApp PRIVATE core/engine/io/include)
+target_include_directories(TestApp PRIVATE core/engine/imgui/include)
+target_include_directories(TestApp PRIVATE core/engine/input/include)
+target_include_directories(TestApp PRIVATE core/engine/logger/include)
+target_include_directories(TestApp PRIVATE core/engine/math/include)
+target_include_directories(TestApp PRIVATE core/engine/rendering/include)
 target_include_directories(TestApp PRIVATE core/engine/shared/include)
-target_include_directories(TestApp PRIVATE core)
+target_include_directories(TestApp PRIVATE core/engine/system/include)

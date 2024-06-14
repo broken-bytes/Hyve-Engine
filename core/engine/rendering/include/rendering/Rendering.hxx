@@ -34,6 +34,6 @@ namespace kyanite::engine::rendering {
 
 	// State management
 	auto SetClearColor(float r, float g, float b, float a) -> void;
-	auto SetViewport(int x, int y, int width, int height) -> void;
+	auto SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) -> void;
 	auto DrawIndexed(uint32_t vertexBuffer, uint32_t indexBuffer, uint32_t material) -> void;
 }

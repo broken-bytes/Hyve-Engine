@@ -73,7 +73,7 @@ namespace kyanite::engine::input {
 					SystemEvent quitEvent = {};
 					quitEvent.type = SystemEventType::Quit;
 
-					Event* event = new Event();
+					auto* event = new Event();
 					event->type = EventType::System;
 					event->data.system = quitEvent;
 

@@ -1,5 +1,4 @@
 #include "system/Bridge_System.h"
-
 #include <SDL2/SDL.h>
 
 void* System_CreateWindow(

@@ -27,6 +27,11 @@ void Rendering_PostFrame() {
 	rendering::PostFrame();
 }
 
+
+void Rendering_SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+	rendering::SetViewport(x, y, width, height);
+}
+
 // Graphics pipeline functions
 uint64_t Rendering_CreateVertexBuffer(NativePointer vertices, size_t length) {
 	return rendering::CreateVertexBuffer(vertices, length);

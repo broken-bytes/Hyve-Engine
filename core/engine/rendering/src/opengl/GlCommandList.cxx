@@ -8,6 +8,7 @@
 
 #include "glad/glad.h"
 
+#include <glm/gtc/type_ptr.hpp>
 #include <stdexcept>
 
 namespace kyanite::engine::rendering::opengl {
@@ -80,9 +81,18 @@ namespace kyanite::engine::rendering::opengl {
 		});
 	}
 
+	auto GlCommandList::SetViewMatrix(glm::mat4 viewMatrix) -> void {
+		_viewMatrix = viewMatrix;
+	}
+
+	auto GlCommandList::SetProjectionMatrix(glm::mat4 projectionMatrix) -> void {
+		_projectionMatrix = projectionMatrix;
+	}
+
 	auto GlCommandList::SetMaterial(std::shared_ptr<Material>& material) -> void {
 		_commands.push_back([this, material]() {
 			auto glMaterial = std::static_pointer_cast<GlMaterial>(material);
+			_currentMaterial = glMaterial;
 			glBindVertexArray(glMaterial->vaoId);
 			glUseProgram(glMaterial->programId);
 		});
@@ -101,9 +111,18 @@ namespace kyanite::engine::rendering::opengl {
 		});
 	}
 
-	auto GlCommandList::DrawIndexed(uint32_t numIndices, uint32_t startIndex, uint32_t startVertex) -> void {
+	auto GlCommandList::DrawIndexed(glm::mat4 model, uint32_t numIndices, uint32_t startIndex, uint32_t startVertex) -> void {
 		//glDrawBuffers(1, &_primitiveTopology);
-		_commands.push_back([this, numIndices, startIndex, startVertex]() {
+		_commands.push_back([this, numIndices, startIndex, startVertex, model]() {
+			GLint modelLoc = glGetUniformLocation(_currentMaterial->programId, "model");
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			// Pass matrices to the shader
+			GLint viewLoc = glGetUniformLocation(_currentMaterial->programId, "view");
+			GLint projLoc = glGetUniformLocation(_currentMaterial->programId, "projection");
+
+			// Pass matrices to the shader
+			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
+			glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(_projectionMatrix));
 			glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
 		});
 	}

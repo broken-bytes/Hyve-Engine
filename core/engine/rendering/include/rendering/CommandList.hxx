@@ -29,11 +29,13 @@ namespace kyanite::engine::rendering {
 			uint32_t maxDepth
 		) -> void = 0;
 		virtual auto SetScissorRect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom) -> void = 0;
+		virtual auto SetViewMatrix(glm::mat4 viewMatrix) -> void = 0;
+		virtual auto SetProjectionMatrix(glm::mat4 projectionMatrix) -> void = 0;
 		virtual auto SetPrimitiveTopology(PrimitiveTopology topology) -> void = 0;
 		virtual auto SetMaterial(std::shared_ptr<Material>& material) -> void = 0;
 		virtual auto BindVertexBuffer(std::shared_ptr<VertexBuffer>& vertexBuffer) -> void = 0;
 		virtual auto BindIndexBuffer(std::shared_ptr<IndexBuffer>& vertexBuffer) -> void = 0;
-		virtual auto DrawIndexed(uint32_t numIndices, uint32_t startIndex, uint32_t startVertex) -> void = 0;
+		virtual auto DrawIndexed(glm::mat4 model, uint32_t numIndices, uint32_t startIndex, uint32_t startVertex) -> void = 0;
 
 		auto Type() const -> CommandListType { return _type; }
 
