@@ -6,6 +6,30 @@
 #ifdef __cplusplus 
 extern "C" {
 #endif
+
+
+
+	/**
+	 * @brief Initializes the IO system
+	 * @return 0 if the system was initialized successfully, otherwise error code
+	 */
+	uint8_t IO_Init(const char* path);
+	/**
+		* @brief Loads a file into a buffer
+		* @param path The path to the file
+		* @param buffer The buffer to save
+		* @param size The size of the buffer
+		* @return 0 if the file was loaded successfully, otherwise error code
+	*/
+	 EXPORTED uint8_t IO_LoadFile(const char* path, uint8_t** buffer, size_t* size);
+
+	 /**
+	 * @brief Frees a buffer
+	 * @param buffer The buffer to free
+	 * @note This function is used to free buffers allocated by IO_LoadFile or IO_LoadFileFromArchive
+	 */
+	 EXPORTED void IO_FreeBuffer(uint8_t* buffer);
+
 	/**
 	 * @brief Creates an archive
 	 *
@@ -21,8 +45,7 @@ extern "C" {
 	 * @param archivePath The path to the archive
 	 * @param filePath The path to the file
 	 */
-	EXPORTED int8_t IO_CheckIfFileExistsInArchive(
-		const char* archivePath,
+	EXPORTED bool IO_CheckIfFileExists(
 		const char* filePath
 	);
 
@@ -36,23 +59,9 @@ extern "C" {
 	EXPORTED int8_t IO_SaveBufferToArchive(
 		const char* path,
 		const char* name,
-		const char* buffer
+		const char* buffer,
+		size_t len
 	);
-
-	/**
-	 * @brief Loads a file from an archive
-	 *
-	 * @param path The path to the archive
-	 * @param name The name of the file
-	 * @param buffer The buffer to save
-	 * @param size The size of the buffer
-	 */
-	EXPORTED int8_t IO_LoadFileFromArchive(
-		const char* path,
-		const char* name,
-		uint8_t** buffer,
-		size_t* size
-	);
-#ifdef __cplusplus 
+#ifdef __cplusplus
 }
 #endif

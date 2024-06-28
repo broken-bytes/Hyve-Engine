@@ -1,0 +1,6 @@
+{
+ "type": "PlayerComponent",
+ "fields": [
+   { "index": 0,"name": "id",  "type" : "UInt64" } 
+]
+}

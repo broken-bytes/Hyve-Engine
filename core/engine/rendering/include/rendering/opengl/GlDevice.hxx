@@ -30,22 +30,27 @@ namespace kyanite::engine::rendering::opengl {
 		virtual auto CreateRenderTarget() -> std::shared_ptr<RenderTarget> override;
 		virtual auto CreateMaterial(
 			std::map<ShaderType, std::shared_ptr<Shader>> shaders,
-			std::map<std::string, uint64_t> textures,
-			std::map<std::string, float> floats,
-			std::map<std::string, uint32_t> ints,
-			std::map<std::string, bool> bools,
-			std::map<std::string, std::array<float, 2>> vec2s,
-			std::map<std::string, std::array<float, 3>> vec3s,
-			std::map<std::string, std::array<float, 4>> vec4s
+			bool isInstanced
 		) -> std::shared_ptr<Material> override;
 		virtual auto CompileShader(
 			const std::string& shaderSource,
 			ShaderType type
 		) -> std::shared_ptr<Shader> override;
-		virtual auto CreateVertexBuffer(const void* data, uint64_t size) -> std::shared_ptr<VertexBuffer> override;
+		virtual auto CreateVertexBuffer(const void* data, uint64_t size, size_t elemSize
+		) -> std::shared_ptr<VertexBuffer> override;
 		virtual auto UpdateVertexBuffer(std::shared_ptr<VertexBuffer> buffer, const void* data, uint64_t size) -> void override;
 		virtual auto CreateIndexBuffer(const uint32_t* indices, size_t len) -> std::shared_ptr<IndexBuffer> override;
 		virtual auto UpdateIndexBuffer(std::shared_ptr<IndexBuffer> buffer, std::vector<uint32_t> indices) -> void override;
+		virtual auto CreateVertexArray(
+			std::shared_ptr<VertexBuffer> vertexBuffer,
+			std::shared_ptr<IndexBuffer> indexBuffer
+		) -> std::shared_ptr<VertexArray> override;
+		auto CreateTexture(
+			uint32_t width,
+			uint32_t height,
+			uint32_t channels,
+			const uint8_t* data
+		)->std::shared_ptr<Texture> override;
 
 		//Delete resources
 		virtual auto DestroyShader(uint64_t shaderHandle) -> void override;

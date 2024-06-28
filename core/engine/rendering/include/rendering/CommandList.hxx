@@ -5,6 +5,7 @@
 #include "Vertex.hxx"
 #include "IndexBuffer.hxx"
 #include "PrimitiveTopology.hxx"
+#include "VertexArray.hxx"
 #include "VertexBuffer.hxx"
 #include "Mesh.hxx"
 #include "Material.hxx"
@@ -32,10 +33,17 @@ namespace kyanite::engine::rendering {
 		virtual auto SetViewMatrix(glm::mat4 viewMatrix) -> void = 0;
 		virtual auto SetProjectionMatrix(glm::mat4 projectionMatrix) -> void = 0;
 		virtual auto SetPrimitiveTopology(PrimitiveTopology topology) -> void = 0;
-		virtual auto SetMaterial(std::shared_ptr<Material>& material) -> void = 0;
-		virtual auto BindVertexBuffer(std::shared_ptr<VertexBuffer>& vertexBuffer) -> void = 0;
-		virtual auto BindIndexBuffer(std::shared_ptr<IndexBuffer>& vertexBuffer) -> void = 0;
-		virtual auto DrawIndexed(glm::mat4 model, uint32_t numIndices, uint32_t startIndex, uint32_t startVertex) -> void = 0;
+		virtual auto SetMaterial(std::shared_ptr<Material> material) -> void = 0;
+		virtual auto BindVertexArray(std::shared_ptr<VertexArray> vertexArray) -> void const = 0;
+		virtual auto BindVertexBuffer(uint8_t index, std::shared_ptr<VertexBuffer> vertexBuffer) -> void const = 0;
+		virtual auto BindIndexBuffer(std::shared_ptr<IndexBuffer> vertexBuffer) -> void const = 0;
+		virtual auto DrawIndexed(glm::mat4 model, uint32_t numIndices, uint32_t startIndex) -> void = 0;
+		virtual auto DrawIndexedInstanced(
+			uint32_t numIndices,
+			uint32_t instanceCount,
+			uint32_t startIndexLocation,
+			int32_t baseVertexLocation
+		) -> void = 0;
 
 		auto Type() const -> CommandListType { return _type; }
 

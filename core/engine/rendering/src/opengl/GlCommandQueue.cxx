@@ -14,7 +14,13 @@ namespace kyanite::engine::rendering::opengl {
 
 	auto GlCommandQueue::Execute(const std::vector<std::shared_ptr<CommandList>>& commandLists) -> void {
 		for (auto& commandList : commandLists) {
-			for (auto& command : std::static_pointer_cast<GlCommandList>(commandList)->_commands) {
+			for (auto& command : std::dynamic_pointer_cast<GlCommandList>(commandList)->_commands) {
+				if (command == nullptr) {
+					std::stringstream ss;
+					ss << "Command is null" << std::endl;
+					std::cerr << ss.str();
+					continue;
+				}
 				command();
 				auto error = glGetError();
 				if (error != GL_NO_ERROR) {

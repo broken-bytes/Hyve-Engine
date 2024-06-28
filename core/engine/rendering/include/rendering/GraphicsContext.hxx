@@ -28,9 +28,11 @@ namespace kyanite::engine::rendering {
         virtual auto SetPrimitiveTopology(PrimitiveTopology topology) -> void;
         virtual auto SetViewMatrix(glm::mat4 view) -> void;
         virtual auto SetProjectionMatrix(glm::mat4 projection) -> void;
-        virtual auto SetVertexBuffer(uint8_t index, std::shared_ptr<VertexBuffer>& buffer) -> void;
-        virtual auto SetIndexBuffer(std::shared_ptr<IndexBuffer>& buffer) -> void;
+        virtual auto SetVertexArray(const std::shared_ptr<VertexArray>& vertexArray) -> void const;
+        virtual auto SetVertexBuffer(uint8_t index, const std::shared_ptr<VertexBuffer>& buffer) -> void const;
+        virtual auto SetIndexBuffer(const std::shared_ptr<IndexBuffer>& buffer) -> void const;
         virtual auto SetMaterial(std::shared_ptr<Material>& material) -> void;
-        virtual auto DrawIndexed(glm::mat4& model, uint32_t indexCount, uint32_t startIndexLocation, int32_t baseVertexLocation) -> void;
+        virtual auto DrawIndexed(glm::mat4& model, uint32_t numIndices, uint32_t startIndex) -> void;
+        virtual auto DrawIndexedInstanced(uint32_t numIndices, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) -> void;
     };
 }

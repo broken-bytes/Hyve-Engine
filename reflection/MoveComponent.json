@@ -1,0 +1,6 @@
+{
+ "type": "MoveComponent",
+ "fields": [
+   { "index": 0,"name": "speed",  "type" : "Vector3" } 
+]
+}

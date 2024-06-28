@@ -12,18 +12,12 @@ project(${PROJECT_NAME})
 enable_testing()
 
 add_subdirectory(core)
+add_subdirectory(tooling)
 
 # Set the output directory for the build
 set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-
-# Set the library output directory for all libraries
-set_target_properties(AssetDatabase PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-set_target_properties(AssetDatabase PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-
-set_target_properties(AssetPipeline PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-set_target_properties(AssetPipeline PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 set_target_properties(Audio PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set_target_properties(Audio PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
@@ -46,6 +40,9 @@ set_target_properties(Logger PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_
 set_target_properties(Math PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set_target_properties(Math PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
+set_target_properties(Crypto PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+set_target_properties(Crypto PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+
 set_target_properties(Rendering PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set_target_properties(Rendering PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
@@ -53,8 +50,6 @@ set_target_properties(System PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_
 set_target_properties(System PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 # Set the runtime output directory for all libraries
-set_target_properties(AssetDatabase PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-set_target_properties(AssetPipeline PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties(Audio PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties(EntityComponentSystem PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties(ImGui PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
@@ -62,12 +57,14 @@ set_target_properties(Input PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_D
 set_target_properties(IO PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties(Logger PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties(Math PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set_target_properties(Crypto PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties(Rendering PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties(System PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
+find_package(flecs CONFIG REQUIRED)
 
 add_executable(TestApp test.cxx)
-target_link_libraries(TestApp PRIVATE AssetDatabase AssetPipeline Audio EntityComponentSystem ImGui Input IO Logger Math Rendering System)
+target_link_libraries(TestApp PRIVATE Audio EntityComponentSystem ImGui Input IO Logger Math Crypto Rendering System flecs::flecs_static)
 target_include_directories(TestApp PRIVATE core/engine/audio/include)
 
 target_include_directories(TestApp PRIVATE core/engine/ecs/include)
@@ -76,6 +73,10 @@ target_include_directories(TestApp PRIVATE core/engine/imgui/include)
 target_include_directories(TestApp PRIVATE core/engine/input/include)
 target_include_directories(TestApp PRIVATE core/engine/logger/include)
 target_include_directories(TestApp PRIVATE core/engine/math/include)
+target_include_directories(TestApp PRIVATE core/engine/crypto/include)
 target_include_directories(TestApp PRIVATE core/engine/rendering/include)
 target_include_directories(TestApp PRIVATE core/engine/shared/include)
 target_include_directories(TestApp PRIVATE core/engine/system/include)
+
+
+add_custom_target(CopyDLLs ALL DEPENDS TestApp) # Will be executed after TestApp is built

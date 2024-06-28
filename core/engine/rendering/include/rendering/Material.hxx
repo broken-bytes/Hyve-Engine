@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Shader.hxx"
+#include "Texture.hxx"
 
 #include <cereal/cereal.hpp>
 #include <cereal/types/array.hpp>
@@ -16,32 +17,11 @@
 #include <string>
 
 namespace kyanite::engine::rendering {
-	struct MaterialData {
-	public:
-		uint32_t vertexShaderId;
-		uint32_t pixelShaderId;
-
-		std::map<std::string, uint64_t> textures;
-		std::map<std::string, float> floats;
-		std::map<std::string, uint32_t> ints;
-		std::map<std::string, bool> bools;
-		std::map<std::string, std::array<float, 2>> vec2s;
-		std::map<std::string, std::array<float, 3>> vec3s;
-		std::map<std::string, std::array<float, 4>> vec4s;
-
-	private:
-		friend class cereal::access;
-
-		template <class Archive>
-		void serialize(Archive& Data) {
-			Data(vertexShaderId, pixelShaderId, textures, floats, ints, bools, vec2s, vec3s, vec4s);
-		}
-	};
-
 	class Material {
 	public:
+		bool isInstanced = false;
 		std::map<ShaderType, std::shared_ptr<Shader>> shaders;
-		std::map<std::string, uint64_t> textures;
+		std::map<std::string, std::shared_ptr<Texture>> textures;
 		std::map<std::string, float> floats;
 		std::map<std::string, uint32_t> ints;
 		std::map<std::string, bool> bools;
@@ -50,22 +30,19 @@ namespace kyanite::engine::rendering {
 		std::map<std::string, std::array<float, 4>> vec4s;
 
 		Material(
-			std::map<ShaderType, std::shared_ptr<Shader>> shaders,
-			std::map<std::string, uint64_t> textures,
-			std::map<std::string, float> floats,
-			std::map<std::string, uint32_t> ints,
-			std::map<std::string, bool> bools,
-			std::map<std::string, std::array<float, 2>> vec2s,
-			std::map<std::string, std::array<float, 3>> vec3s,
-			std::map<std::string, std::array<float, 4>> vec4s
+			std::map<ShaderType, std::shared_ptr<Shader>> shaders
 		) : shaders(shaders), 
-			textures(textures), 
-			floats(floats), 
-			ints(ints), 
-			bools(bools), 
-			vec2s(vec2s), 
-			vec3s(vec3s), 
-			vec4s(vec4s) {}
+			textures({}),
+			floats({}),
+			ints({}),
+			bools({}),
+			vec2s({}),
+			vec3s({}),
+			vec4s({}) {}
+
+		virtual void Bind() = 0;
+
+		virtual void SetBuiltins(glm::mat4 model, glm::mat4 view, glm::mat4 projection) = 0;
 	};
 }
 

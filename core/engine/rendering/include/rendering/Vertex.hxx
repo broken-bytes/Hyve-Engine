@@ -10,15 +10,7 @@
 namespace kyanite::engine::rendering {
 	struct Vertex {
 		glm::vec3 position;
-		glm::vec3 normal;
 		glm::vec2 uvs;
 
-	private:
-		friend class cereal::access;
-
-		template <class Archive>
-		void serialize(Archive& Data) {
-			Data(position, normal, uvs);
-		}
 	};
 }

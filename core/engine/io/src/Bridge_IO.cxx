@@ -3,21 +3,24 @@
 
 #include <shared/NativePointer.hxx>
 
-#include <SDL2/SDL.h>
 #include <iostream>
 
-int8_t IO_CreateArchive(const char* path) {
-	return kyanite::engine::io::CreateArchive(path);
+uint8_t IO_Init(const char* path) {
+	return kyanite::engine::io::Init(path);
 }
 
-int8_t IO_CheckIfFileExistsInArchive(const char* archivePath, const char* filePath) {
-	return kyanite::engine::io::CheckIfFileExists(archivePath, filePath);
+void IO_FreeBuffer(uint8_t* buffer) {
+	delete[] buffer;
 }
 
-int8_t IO_SaveBufferToArchive(const char* path, const char* name, const char* buffer) {
-	return kyanite::engine::io::SaveBufferToArchive(path, name, buffer);
+bool IO_CheckIfFileExists(const char* filePath) {
+	return kyanite::engine::io::CheckIfFileExists(filePath);
 }
 
-int8_t IO_LoadFileFromArchive(const char* path, const char* name, uint8_t** buffer, size_t* size) {
-	return kyanite::engine::io::LoadFileFromArchive(path, name, buffer, size);
+int8_t IO_SaveBufferToArchive(const char* path, const char* name, const char* buffer, size_t len) {
+	return kyanite::engine::io::SaveBufferToArchive(path, name, buffer, len);
+}
+
+uint8_t IO_LoadFile(const char* path, uint8_t** buffer, size_t* size) {
+	return kyanite::engine::io::LoadFileFromArchive(path, buffer, size);
 }

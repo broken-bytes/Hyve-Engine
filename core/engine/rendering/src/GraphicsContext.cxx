@@ -39,11 +39,18 @@ namespace kyanite::engine::rendering {
         _commandList->SetProjectionMatrix(projection);
     }
 
-    auto GraphicsContext::SetVertexBuffer(uint8_t index, std::shared_ptr<VertexBuffer>& buffer) -> void {
-        _commandList->BindVertexBuffer(buffer);
+    auto GraphicsContext::SetVertexArray(const std::shared_ptr<VertexArray>& vertexArray) -> void const {
+		_commandList->BindVertexArray(vertexArray);
+	}
+
+    auto GraphicsContext::SetVertexBuffer(
+        uint8_t index, 
+        const std::shared_ptr<VertexBuffer>& buffer
+    ) -> void const {
+        _commandList->BindVertexBuffer(index, buffer);
     }
 
-    auto GraphicsContext::SetIndexBuffer(std::shared_ptr<IndexBuffer>& buffer) -> void {
+    auto GraphicsContext::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& buffer) -> void const {
         _commandList->BindIndexBuffer(buffer);
     }
 
@@ -51,7 +58,11 @@ namespace kyanite::engine::rendering {
         _commandList->SetMaterial(material);
     }
 
-    auto GraphicsContext::DrawIndexed(glm::mat4& model, uint32_t indexCount, uint32_t startIndexLocation, int32_t baseVertexLocation) -> void {
-        _commandList->DrawIndexed(model, indexCount, startIndexLocation, baseVertexLocation);
+    auto GraphicsContext::DrawIndexed(glm::mat4& model, uint32_t numIndices, uint32_t startIndex) -> void {
+        _commandList->DrawIndexed(model, numIndices, startIndex);
+    }
+
+    auto GraphicsContext::DrawIndexedInstanced(uint32_t numIndices, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation) -> void {
+        _commandList->DrawIndexedInstanced(numIndices, instanceCount, startIndexLocation, baseVertexLocation);
     }
 }

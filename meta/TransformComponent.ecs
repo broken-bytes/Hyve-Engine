@@ -2,7 +2,10 @@ using flecs.meta
 
 @brief TransformComponent component
 Struct TransformComponent {
+   localPosition :- {Vector3}
+   localRotation :- {f32}
+   localScale :- {Vector3}
    position :- {Vector3}
-   rotation :- {Quaternion}
+   rotation :- {f32}
    scale :- {Vector3}
 }

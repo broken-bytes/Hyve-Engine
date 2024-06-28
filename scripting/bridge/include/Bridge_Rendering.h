@@ -49,24 +49,33 @@ EXPORTED void Rendering_SetViewport(uint32_t x, uint32_t y, uint32_t width, uint
  * @param vertexCount The number of vertices to draw
  * @param indexCount The number of indices to draw
  */
-EXPORTED void Rendering_DrawMesh(uint64_t shaderId, uint32_t vertexBuffer, uint32_t indexBuffer, uint32_t vertexCount, uint32_t indexCount);
+EXPORTED extern void Rendering_DrawMesh(
+	const float* transform,
+	uint32_t materialId,
+	uint32_t vaoId
+);
+
+EXPORTED extern void Rendering_DrawSprite(
+	const float* transform,
+	uint32_t materialId
+);
 
 /**
     @brief Starts the rendering frame
 */
-EXPORTED void Rendering_PreFrame();
+EXPORTED extern void Rendering_PreFrame();
 
 /**
  * @brief Updates the rendering system
  * @param deltaTime The time since the last frame
  *
  */
-EXPORTED void Rendering_Update(float deltaTime);
+EXPORTED extern void Rendering_Update(float deltaTime);
 
 /**
 * @brief Render the frame
 */
-EXPORTED void Rendering_PostFrame();
+EXPORTED extern void Rendering_PostFrame();
 
 // Graphics pipeline functions
 
@@ -76,20 +85,20 @@ EXPORTED void Rendering_PostFrame();
 * @param length The length of the buffer in count of vertices
 * @return The id of the vertex buffer
 */
-EXPORTED uint64_t Rendering_CreateVertexBuffer(NativePointer vertices, size_t length);
+EXPORTED uint32_t Rendering_CreateVertexBuffer(const float* vertices, size_t length, size_t elemSize);
 
 /**
 * @brief Updates a vertex buffer
 * @param vertexBufferId The id of the vertex buffer to update
 * @param vertices The new vertices to use
 */
-EXPORTED void Rendering_UpdateVertexBuffer(uint64_t vertexBufferId, NativePointer vertices, size_t length);
+EXPORTED void Rendering_UpdateVertexBuffer(uint32_t vertexBufferId, NativePointer vertices, size_t length);
 
 /**
 * @brief Frees a vertex buffer
 * @param vertexBufferId The id of the vertex buffer to free
 */
-EXPORTED void Rendering_FreeVertexBuffer(uint64_t vertexBufferId);
+EXPORTED void Rendering_FreeVertexBuffer(uint32_t vertexBufferId);
 
 /**
 * @brief Loads the vertex buffer into cpu memory
@@ -97,7 +106,7 @@ EXPORTED void Rendering_FreeVertexBuffer(uint64_t vertexBufferId);
 * @param vertices The pointer to the cpu memory
 * @param length The length of the buffer in count of vertices
 */
-EXPORTED void Rendering_LoadVertexBuffer(uint64_t vertexBufferId, NativePointer* vertices, size_t* length);
+EXPORTED void Rendering_LoadVertexBuffer(uint32_t vertexBufferId, NativePointer* vertices, size_t* length);
 
 /**
 * @brief Creates an index buffer
@@ -105,20 +114,28 @@ EXPORTED void Rendering_LoadVertexBuffer(uint64_t vertexBufferId, NativePointer*
 * @param length The length of the buffer in count of indices
 * @return The id of the index buffer
 */
-EXPORTED uint64_t Rendering_CreateIndexBuffer(NativePointer indices, size_t length);
+EXPORTED uint32_t Rendering_CreateIndexBuffer(const uint32_t* indices, size_t length);
 
 /**
 * @brief Updates an index buffer
 * @param indexBufferId The id of the index buffer to update
 * @param indices The new indices to use
 */
-EXPORTED void Rendering_UpdateIndexBuffer(uint64_t indexBufferId, NativePointer indices);
+EXPORTED void Rendering_UpdateIndexBuffer(uint32_t indexBufferId, NativePointer indices);
 
 /**
 * @brief Frees an index buffer
 * @param indexBufferId The id of the index buffer to free
 */
-EXPORTED void Rendering_FreeIndexBuffer(uint64_t indexBufferId);
+EXPORTED void Rendering_FreeIndexBuffer(uint32_t indexBufferId);
+
+/**
+* @brief Creates a vertex array(VAO)
+* @param vertexBufferId The id of the vertex buffer to use
+* @param indexBufferId The id of the index buffer to use
+* @return The id of the vertex array
+*/
+EXPORTED uint32_t Rendering_CreateVertexArray(uint32_t vertexBufferId, uint32_t indexBufferId);
 
 /**
 * @brief Creates a shader
@@ -126,13 +143,43 @@ EXPORTED void Rendering_FreeIndexBuffer(uint64_t indexBufferId);
 * @param shaderType The type of the shader. 0 for vertex, 1 for fragment
 * @return The id of the shader
 */
-EXPORTED uint64_t Rendering_CreateShader(const char* shader, uint8_t shaderType);
+EXPORTED uint32_t Rendering_CreateShader(const char* shader, uint8_t shaderType);
 
 /**
 * @brief Destroys a shader
 * @param shaderId The id of the shader to destroy
 */
-EXPORTED void Rendering_DestroyShader(uint64_t shaderId);
+EXPORTED void Rendering_DestroyShader(uint32_t shaderId);
+
+/**
+ * @brief Creates a texture
+ * @param buffer The buffer to use
+ * @param size The size of the buffer
+ * @return The id of the texture
+ */
+EXPORTED uint32_t Rendering_LoadTexture(const uint8_t* data, size_t len);
+
+/**
+* @brief Creates a material
+* @param shaderId The id of the shader to use
+* @return The id of the material
+*/
+EXPORTED uint32_t Rendering_CreateMaterial(uint32_t pixelShader, uint32_t vertexShader, bool isInstanced);
+
+/**
+* @brief Copies a material, creating a new one with the same properties
+* @param materialId The id of the material to copy
+* @return The id of the new material
+*/
+EXPORTED uint32_t Rendering_CopyMaterial(uint32_t materialId);
+
+/**
+* @brief Sets the material texture
+* @param materialId The id of the material
+* @param textureId The id of the texture
+* @param name The name of the texture in the shader
+*/
+EXPORTED void Rendering_SetMaterialTexture(uint32_t materialId, uint32_t textureId, const char* name);
 
 #ifdef __cplusplus 
 }

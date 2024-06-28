@@ -1,20 +1,42 @@
 #include "io/IO.hxx"
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_Vulkan.h>
-#include <sodium.h>
-#include <zip.h>
+#include "io/filesystem/FileSystem.hxx"
+#include <crypto/Bridge_Crypto.h>
+#include <physfs.h>
 #include <stduuid/uuid.h>
-#include <imgui.h>
-
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <minizip-ng/zip.h>
 #include <string>
 #include <string_view>
 #include <cassert>
 
+std::string_view HashArchiveName(std::string& name) {
+	uint8_t* buffer;
+	size_t size;
+
+	// Conver the name string to a uint8_t_ptr
+	auto* bytes = reinterpret_cast<uint8_t*>(name.data());
+
+	Crypto_Hash(bytes, name.size(), &buffer, &size);
+
+	// Copy the buffer to a string_view
+	std::string_view hash(reinterpret_cast<char*>(buffer), size);
+
+	return hash;
+}
+
 namespace kyanite::engine::io {
+	const char* BundlePath = "";
+	std::unique_ptr<FileSystem> Filesystem = nullptr;
+
+	uint8_t Init(const char* path) {
+		BundlePath = path;
+		Filesystem = std::make_unique<FileSystem>(std::string(path));
+
+		return 0;
+	}
+
 	auto LoadFileToBuffer(std::string_view path) -> std::vector<uint8_t> {
 		auto file = std::ifstream(std::filesystem::path(path), std::ios::binary);
 		auto buffer = std::vector<uint8_t>(std::istreambuf_iterator<char>(file), {});
@@ -33,33 +55,14 @@ namespace kyanite::engine::io {
 	}
 
 	auto CreateArchive(const char* path) -> int8_t {
-		zip_t* archive;
-		int err;
-
-		if ((archive = zip_open(path, ZIP_CREATE, &err)) == nullptr) {
-			zip_error_t error;
-			zip_error_init_with_code(&error, err);
-			zip_error_fini(&error);
-
-			return -1;
+		if (auto zip = zipOpen(path, APPEND_STATUS_CREATE); zip != nullptr) {
+			zipClose(zip, nullptr);
+			return 0;
 		}
 
-		zip_close(archive);
+		printf("Failed to open archive\n");
 
-		return 0;
-	}
-
-	auto OpenArchive(std::string path) -> void {
-		zip_t* archive;
-		int err;
-
-		if ((archive = zip_open(path.c_str(), ZIP_RDONLY, &err)) == nullptr) {
-			zip_error_t error;
-			zip_error_init_with_code(&error, err);
-			zip_error_fini(&error);
-
-			throw std::runtime_error("Failed to open archive");
-		}
+		return 1;
 	}
 
 	auto CreateFile(std::string path) -> void {
@@ -81,116 +84,32 @@ namespace kyanite::engine::io {
 		return files;
 	}
 
-	auto CheckIfFileExists(std::string path) -> int8_t {
-		return std::filesystem::exists(std::filesystem::path(path));
+	auto CheckIfFileExists(std::string_view filePath) -> bool {
+		// Check if the file exists
+		return Filesystem->CheckFileExists(filePath);
 	}
 
-	auto CheckIfFileExists(std::string archivePath, std::string filePath) -> int8_t {
-		zip_t* archive;
-		int err;
-
-		if ((archive = zip_open(archivePath.c_str(), ZIP_RDONLY, &err)) == nullptr) {
-			zip_error_t error;
-			zip_error_init_with_code(&error, err);
-			zip_error_fini(&error);
-
-			return -1;
-		}
-
-		zip_stat_t stat;
-		zip_stat_init(&stat);
-		zip_stat(archive, filePath.c_str(), ZIP_FL_ENC_UTF_8, &stat);
-		zip_close(archive);
-
-		return stat.valid & ZIP_STAT_SIZE;
-	}
-
-	auto SaveBufferToArchive(const char* path, const char* name, const char* buffer) -> int8_t {
-		zip_t* archive;
-		int err;
-
-		if ((archive = zip_open(path, ZIP_CREATE, &err)) == nullptr) {
-			zip_error_t error;
-			zip_error_init_with_code(&error, err);
-			zip_error_fini(&error);
-
-			return -1;
-		}
-
-		zip_source_t* s = nullptr;
-		if ((s = zip_source_buffer(archive, buffer, strlen(buffer), 0)) == NULL ||
-			zip_file_add(archive, name, s, ZIP_FL_OVERWRITE | ZIP_FL_ENC_UTF_8) < 0) {
-			zip_source_free(s);
-		}
-
-		zip_close(archive);
-
+	auto SaveBufferToArchive(const char* path, const char* name, const char* buffer, size_t len) -> int8_t {
 		return 0;
 	}
 
 	auto LoadFileFromArchive(
 		const char* path,
-		const char* name,
 		uint8_t** buffer,
 		size_t* len
 	) -> int8_t {
-		zip_t* archive;
-		int err;
+		auto file = Filesystem->ReadFile(std::string(path));
 
-		if ((archive = zip_open(path, ZIP_RDONLY, &err)) == nullptr) {
-			zip_error_t error;
-			zip_error_init_with_code(&error, err);
-			zip_error_fini(&error);
-			*len = 0;
-			return -1;
+		if (file.empty()) {
+			return 1;
 		}
 
-		zip_stat_t stat;
-		zip_stat_init(&stat);
-		zip_stat(archive, name, ZIP_FL_ENC_UTF_8, &stat);
-		zip_close(archive);
+		*buffer = new uint8_t[file.size() + 1];
+		*len = file.size() + 1;
 
-		return LoadFileFromArchivePartial(path, name, 0, stat.size, buffer, len);
-	}
-
-	auto LoadFileFromArchivePartial(
-		const char* path,
-		const char* name,
-		size_t start, 
-		size_t count, 
-		uint8_t** buffer,
-		size_t* len
-	) -> int8_t {
-		zip_t* archive;
-		int err;
-
-		if ((archive = zip_open(path, ZIP_RDONLY, &err)) == nullptr) {
-			zip_error_t error;
-			zip_error_init_with_code(&error, err);
-			zip_error_fini(&error);
-
-			return -1;
-		}
-
-		zip_stat_t stat;
-		zip_stat_init(&stat);
-		zip_stat(archive, name, ZIP_FL_ENC_UTF_8, &stat);
-
-		zip_file_t* file = zip_fopen(archive, name, ZIP_FL_ENC_UTF_8);
-		if (file == nullptr) {
-			zip_close(archive);
-			return -2;
-		}
-
-		auto rawBuffer = new uint8_t[count];
-		auto result = zip_fseek(file, start, SEEK_SET);
-		result = zip_file_is_seekable(file);
-		result = zip_fread(file, rawBuffer, count);
-		result = zip_fclose(file);
-		result = zip_close(archive);
-
-		*buffer = rawBuffer;
-		*len = count;
+		memcpy(*buffer, file.data(), file.size());
+		// Null terminate the buffer
+		(*buffer)[file.size()] = '\0';
 
 		return 0;
 	}

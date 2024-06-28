@@ -38,6 +38,8 @@ namespace kyanite::engine::rendering::opengl {
 		_commands.push_back([color]() {
 			glClearColor(color.r, color.g, color.b, color.a);
 			glClear(GL_COLOR_BUFFER_BIT);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		});
 	}
 
@@ -61,7 +63,7 @@ namespace kyanite::engine::rendering::opengl {
 	}
 
 	auto GlCommandList::SetPrimitiveTopology(PrimitiveTopology topology) -> void {
-		_commands.push_back([this, topology]() {
+			_commands.push_back([this, topology]() {
 			switch (topology) {
 			case PrimitiveTopology::TRIANGLE_LIST:
 				_primitiveTopology = GL_TRIANGLES;
@@ -82,48 +84,103 @@ namespace kyanite::engine::rendering::opengl {
 	}
 
 	auto GlCommandList::SetViewMatrix(glm::mat4 viewMatrix) -> void {
-		_viewMatrix = viewMatrix;
+		_commands.push_back([this, viewMatrix]() {
+			_viewMatrix = viewMatrix;
+		});
 	}
 
 	auto GlCommandList::SetProjectionMatrix(glm::mat4 projectionMatrix) -> void {
-		_projectionMatrix = projectionMatrix;
+		_commands.push_back([this, projectionMatrix]() {
+			_projectionMatrix = projectionMatrix;
+		});
 	}
 
-	auto GlCommandList::SetMaterial(std::shared_ptr<Material>& material) -> void {
+	auto GlCommandList::BindVertexArray(std::shared_ptr<VertexArray> vertexArray) -> void const {
+		_commands.push_back([this, vertexArray]() {
+			vertexArray->Bind();
+		});
+	}
+
+	auto GlCommandList::SetMaterial(std::shared_ptr<Material> material) -> void {
 		_commands.push_back([this, material]() {
 			auto glMaterial = std::static_pointer_cast<GlMaterial>(material);
 			_currentMaterial = glMaterial;
-			glBindVertexArray(glMaterial->vaoId);
-			glUseProgram(glMaterial->programId);
+			_currentMaterial->Bind();
 		});
 
 	}
 
-	auto GlCommandList::BindVertexBuffer(std::shared_ptr<VertexBuffer>& vertexBuffer) -> void {
-		_commands.push_back([this, &vertexBuffer]() {
+	auto GlCommandList::BindVertexBuffer(uint8_t index, std::shared_ptr<VertexBuffer> vertexBuffer) -> void const {
+		_commands.push_back([this, vertexBuffer, index]() {
 			vertexBuffer->Bind();
+
+			if (index == 0) {
+				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+				glEnableVertexAttribArray(0);
+
+				// Texture coordinate attribute
+				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uvs));
+				glEnableVertexAttribArray(1);
+			}
+			else {
+				// Set up instance attributes (model matrix as 4 vec4s)
+				glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+				glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+				glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+				glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+				glEnableVertexAttribArray(2);
+				glEnableVertexAttribArray(3);
+				glEnableVertexAttribArray(4);
+				glEnableVertexAttribArray(5);
+
+				// Set divisors for instanced attributes
+				glVertexAttribDivisor(2, 1);
+				glVertexAttribDivisor(3, 1);
+				glVertexAttribDivisor(4, 1);
+				glVertexAttribDivisor(5, 1);
+			}
 		});
 	}
 
-	auto GlCommandList::BindIndexBuffer(std::shared_ptr <IndexBuffer>& indexBuffer) -> void {
-		_commands.push_back([this, &indexBuffer]() {
+	auto GlCommandList::BindIndexBuffer(std::shared_ptr<IndexBuffer> indexBuffer) -> void const {
+		_commands.push_back([this, indexBuffer]() {
 			indexBuffer->Bind();
 		});
 	}
 
-	auto GlCommandList::DrawIndexed(glm::mat4 model, uint32_t numIndices, uint32_t startIndex, uint32_t startVertex) -> void {
-		//glDrawBuffers(1, &_primitiveTopology);
-		_commands.push_back([this, numIndices, startIndex, startVertex, model]() {
-			GLint modelLoc = glGetUniformLocation(_currentMaterial->programId, "model");
-			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-			// Pass matrices to the shader
-			GLint viewLoc = glGetUniformLocation(_currentMaterial->programId, "view");
-			GLint projLoc = glGetUniformLocation(_currentMaterial->programId, "projection");
+	auto GlCommandList::DrawIndexed(glm::mat4 model, uint32_t numIndices, uint32_t startIndex) -> void {
+		_commands.emplace_back([this, numIndices, startIndex, model]() {
+			_currentMaterial->SetBuiltins(model, _viewMatrix, _projectionMatrix);
 
-			// Pass matrices to the shader
-			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
-			glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(_projectionMatrix));
-			glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
+			GLenum error = glGetError();
+			if (error != GL_NO_ERROR) {
+				std::cerr << "OpenGL Error: " << error << std::endl;
+			}
+
+			glDrawElements(_primitiveTopology, numIndices, GL_UNSIGNED_INT, (void*)(startIndex * sizeof(uint32_t)));
+		});
+	}
+
+	auto GlCommandList::DrawIndexedInstanced(
+		uint32_t numIndices,
+		uint32_t instanceCount,
+		uint32_t startIndexLocation,
+		int32_t baseVertexLocation
+	) -> void {
+		_commands.emplace_back([this, numIndices, instanceCount, startIndexLocation]() {
+			_currentMaterial->SetBuiltins(glm::mat4(1), _viewMatrix, _projectionMatrix);
+
+			GLenum error = glGetError();
+			if (error != GL_NO_ERROR) {
+				std::cerr << "OpenGL Error: " << error << std::endl;
+			}
+
+			glDrawElementsInstanced(_primitiveTopology, numIndices, GL_UNSIGNED_INT, (void*)(startIndexLocation * sizeof(uint32_t)), instanceCount);
+
+			error = glGetError();
+			if (error != GL_NO_ERROR) {
+				std::cerr << "OpenGL Error: " << error << std::endl;
+			}
 		});
 	}
 }

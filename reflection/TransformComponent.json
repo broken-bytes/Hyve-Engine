@@ -1,8 +1,11 @@
 {
  "type": "TransformComponent",
  "fields": [
-   { "index": 0,"name": "position",  "type" : "Vector3" },
-   { "index": 1,"name": "rotation",  "type" : "Quaternion" },
-   { "index": 2,"name": "scale",  "type" : "Vector3" } 
+   { "index": 0,"name": "localPosition",  "type" : "Vector3" },
+   { "index": 1,"name": "localRotation",  "type" : "f32" },
+   { "index": 2,"name": "localScale",  "type" : "Vector3" },
+   { "index": 3,"name": "position",  "type" : "Vector3" },
+   { "index": 4,"name": "rotation",  "type" : "f32" },
+   { "index": 5,"name": "scale",  "type" : "Vector3" } 
 ]
 }

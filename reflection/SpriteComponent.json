@@ -1,0 +1,6 @@
+{
+ "type": "SpriteComponent",
+ "fields": [
+   { "index": 0,"name": "material",  "type" : "Material" } 
+]
+}

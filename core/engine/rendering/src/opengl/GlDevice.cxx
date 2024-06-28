@@ -9,6 +9,8 @@
 #include "rendering/opengl/GlMaterial.hxx"
 #include "rendering/opengl/GlSwapchain.hxx"
 #include "rendering/opengl/GlShader.hxx"
+#include "rendering/opengl/GlTexture.hxx"
+#include "rendering/opengl/GlVertexArray.hxx"
 #include "rendering/RenderBackendType.hxx"
 #include "rendering/GraphicsContext.hxx"
 #include "rendering/ImGuiContext.hxx"
@@ -113,24 +115,9 @@ namespace kyanite::engine::rendering::opengl {
 
 	auto GlDevice::CreateMaterial(
 		std::map<ShaderType, std::shared_ptr<Shader>> shaders,
-		std::map<std::string, uint64_t> textures,
-		std::map<std::string, float> floats,
-		std::map<std::string, uint32_t> ints,
-		std::map<std::string, bool> bools,
-		std::map<std::string, std::array<float, 2>> vec2s,
-		std::map<std::string, std::array<float, 3>> vec3s,
-		std::map<std::string, std::array<float, 4>> vec4s
+		bool isInstanced
 	) -> std::shared_ptr<Material> {
-		return std::make_shared<GlMaterial>(
-			shaders,
-			textures,
-			floats,
-			ints,
-			bools,
-			vec2s,
-			vec3s,
-			vec4s
-		);
+		return std::make_shared<GlMaterial>(shaders, isInstanced);
 	}
 
 	auto GlDevice::CompileShader(
@@ -155,7 +142,6 @@ namespace kyanite::engine::rendering::opengl {
 		glShaderSource(shaderId, 1, &shaderCodeGl, nullptr);
 		glCompileShader(shaderId);
 
-		// Check for errors
 		GLint iTestReturn;
 		glGetShaderiv(shaderId, GL_COMPILE_STATUS, &iTestReturn);
 		if (iTestReturn == GL_FALSE) {
@@ -172,9 +158,10 @@ namespace kyanite::engine::rendering::opengl {
 
 	auto GlDevice::CreateVertexBuffer(
 		const void* data, 
-		uint64_t size
+		uint64_t size,
+		size_t elemSize
 	) -> std::shared_ptr<VertexBuffer> {
-		return std::make_shared<GlVertexBuffer>(data, size);
+		return std::make_shared<GlVertexBuffer>(data, size, elemSize);
 	}
 
 	auto GlDevice::UpdateVertexBuffer(
@@ -198,6 +185,24 @@ namespace kyanite::engine::rendering::opengl {
 		std::vector<uint32_t> indices
 	) -> void {
 
+	}
+
+	auto GlDevice::CreateVertexArray(
+		std::shared_ptr<VertexBuffer> vertexBuffer,
+		std::shared_ptr<IndexBuffer> indexBuffer
+	) -> std::shared_ptr<VertexArray> {
+		auto ib = std::dynamic_pointer_cast<GlIndexBuffer>(indexBuffer);
+		auto vb = std::dynamic_pointer_cast<GlVertexBuffer>(vertexBuffer);
+		return std::make_shared<GlVertexArray>(ib, vb);
+	}
+
+	auto GlDevice::CreateTexture(
+		uint32_t width,
+		uint32_t height,
+		uint32_t channels,
+		const uint8_t* data
+	) -> std::shared_ptr<Texture> {
+		return std::make_shared<GlTexture>(width, height, channels, data);
 	}
 
 	auto GlDevice::DestroyShader(uint64_t shaderHandle) -> void {

@@ -1,8 +1,6 @@
 @echo off
 
 :: Step 1: Put the bridging headers into ./scripting/bridge
-robocopy "core/editor/assetdatabase/include/assetdatabase" "scripting/bridge/include" "Bridge_AssetDatabase.h"
-robocopy "core/editor/assetpipeline/include/assetpipeline" "scripting/bridge/include" "Bridge_AssetPipeline.h"
 robocopy "core/engine/audio/include/audio" "scripting/bridge/include" "Bridge_Audio.h"
 robocopy "core/engine/ecs/include/ecs" "scripting/bridge/include/" "Bridge_ECS.h"
 robocopy "core/engine/imgui/include/imgui" "scripting/bridge/include" "Bridge_ImGui.h"
@@ -25,7 +23,7 @@ if %1 == "Ninja" (
 )
 
 :: Step 3: Build the swift package
-swift build -Xlinker lib\Debug\AssetDatabase.lib -Xlinker lib\Debug\AssetPipeline.lib -Xlinker lib\Debug\Audio.lib -Xlinker lib\Debug\EntityComponentSystem.lib -Xlinker lib\Debug\ImGUI.lib -Xlinker lib\Debug\Input.lib -Xlinker lib\Debug\IO.lib -Xlinker lib\Debug\System.lib -Xlinker lib\Debug\Rendering.lib
+swift build -Xlinker lib\Debug\Audio.lib -Xlinker lib\Debug\EntityComponentSystem.lib -Xlinker lib\Debug\ImGUI.lib -Xlinker lib\Debug\Input.lib -Xlinker lib\Debug\IO.lib -Xlinker lib\Debug\System.lib -Xlinker lib\Debug\Rendering.lib
 
 :: Copy all C++ dlls to the swift package directory
 robocopy "bin/Debug" "./.build/x86_64-unknown-windows-msvc/debug" "*.dll"

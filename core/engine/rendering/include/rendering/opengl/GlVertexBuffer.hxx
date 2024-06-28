@@ -5,11 +5,16 @@
 #include <glad/glad.h>
 
 #include <cstdint>
+#include <stdexcept>
 
 namespace kyanite::engine::rendering::opengl {
 	class GlVertexBuffer : public VertexBuffer {
 	public:
-		GlVertexBuffer(const void* data = nullptr, size_t size = 0);
+		GlVertexBuffer(
+			const void* data,
+			size_t size,
+			size_t elemSize
+		);
 
 		~GlVertexBuffer();
 
@@ -22,6 +27,10 @@ namespace kyanite::engine::rendering::opengl {
 
 		auto Bind() const -> void override {
 			glBindBuffer(GL_ARRAY_BUFFER, _id);
+
+			if (glGetError() != GL_NO_ERROR) {
+				throw std::runtime_error("Failed to bind vertex buffer");
+			}
 		}
 
 	private:

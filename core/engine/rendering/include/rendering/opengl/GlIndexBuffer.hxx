@@ -5,6 +5,7 @@
 #include <glad/glad.h>
 
 #include <cstdint>
+#include <stdexcept>
 #include <vector>
 
 namespace kyanite::engine::rendering::opengl {
@@ -15,6 +16,10 @@ namespace kyanite::engine::rendering::opengl {
 
 		auto Bind() const -> void override {
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _id);
+
+			if (glGetError() != GL_NO_ERROR) {
+				throw std::runtime_error("Failed to bind index buffer");
+			}
 		}
 
 		auto SetData(const void* data, size_t size) -> void override {

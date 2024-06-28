@@ -8,7 +8,6 @@ target_include_directories(Input PRIVATE ${CMAKE_SOURCE_DIR}/core/engine/math/in
 target_include_directories(Input PRIVATE ${CMAKE_SOURCE_DIR}/core/engine/shared/include)
 target_include_directories(Input PRIVATE ${CMAKE_SOURCE_DIR}/core/engine//core/include)
 
-
 find_package(SDL2 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 

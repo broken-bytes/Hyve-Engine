@@ -1,0 +1,102 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MaterialTemplate",
+    "type": "object",
+    "properties": {
+      "pixelShader": {
+        "type": "string"
+      },
+      "vertexShader": {
+        "type": "string"
+      },
+      "textures": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "required": ["path", "key"]
+        },
+        "default": []
+      },
+      "ints": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "default": {}
+      },
+      "floats": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "number"
+        },
+        "default": {}
+      },
+      "vectors2": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": ["x", "y"]
+        },
+        "default": {}
+      },
+      "vectors3": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": ["x", "y", "z"]
+        },
+        "default": {}
+      },
+      "vectors4": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            },
+            "w": {
+              "type": "number"
+            }
+          },
+          "required": ["x", "y", "z", "w"]
+        },
+        "default": {}
+      }
+    },
+    "required": ["pixelShader", "vertexShader"],
+    "additionalProperties": false
+  }
